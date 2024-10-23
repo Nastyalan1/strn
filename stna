@@ -1,0 +1,281 @@
+expwrmient:5 Amplitude shift key modulation ask psk fsk
+
+import numpy as np
+import matplotlib.pyplot as plt
+from numpy import pi
+
+# Carrier frequencies (in Hz)
+fL = 2  # Low frequency for FSK (and used for ASK/PSK carrier)
+fH = 4  # High frequency for FSK
+
+# Binary data (1's and 0's)
+data = np.array([1, 1, 0, 0, 1, 0, 1])
+
+# Time array
+t = np.arange(0, 1, 1/500)  # For one second with 500 samples per second
+
+# Carrier signals
+xL = np.sin(2 * pi * fL * t)  # Low frequency carrier
+xH = np.sin(2 * pi * fH * t)  # High frequency carrier (for FSK)
+
+# Prepare the figure and axes
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 10))
+
+# Line width and font size
+lw, fs = 3, 18
+
+# PSK data: Convert (0, 1) to (-1, 1) for BPSK (binary phase shift keying)
+data_psk = 2 * data - 1
+
+# Plot carrier signal
+ax1.plot(t, xL, linewidth=lw)
+ax1.set_ylabel('Carrier Signal', fontsize=fs)
+ax1.grid()
+
+# ASK signal (Amplitude Shift Keying)
+ask_signal = np.array([xL if bit == 1 else np.zeros_like(xL) for bit in data])
+for i in range(len(data)):
+    ax2.plot(t + i, ask_signal[i], linewidth=lw)
+ax2.set_ylabel('ASK Signal', fontsize=fs)
+ax2.grid()
+
+# PSK signal (Phase Shift Keying)
+psk_signal = np.array([xL * data_psk[i] for i in range(len(data))])
+for i in range(len(data)):
+    ax3.plot(t + i, psk_signal[i], linewidth=lw)
+ax3.set_ylabel('PSK Signal', fontsize=fs)
+ax3.grid()
+
+# FSK signal (Frequency Shift Keying)
+fsk_signal = np.array([xL if bit == 0 else xH for bit in data])
+for i in range(len(data)):
+    ax4.plot(t + i, fsk_signal[i], linewidth=lw)
+ax4.set_ylabel('FSK Signal', fontsize=fs)
+ax4.grid()
+
+# Adjust layout to prevent overlap and show the plot
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+Experiment Huffman code
+
+
+import heapq
+from collections import defaultdict
+
+# Function to build the Huffman Tree
+def build_huffman_tree(probabilities):
+    # Create a heap with probabilities and symbols
+    heap = [[weight, [symbol, ""]] for symbol, weight in probabilities.items()]
+    heapq.heapify(heap)  # Convert list to a heap
+    
+    while len(heap) > 1:
+        # Pop two smallest elements
+        lo = heapq.heappop(heap)
+        hi = heapq.heappop(heap)
+
+        # Add '0' to the code of the symbols in the 'lo' branch
+        for pair in lo[1:]:
+            pair[1] = '0' + pair[1]
+        
+        # Add '1' to the code of the symbols in the 'hi' branch
+        for pair in hi[1:]:
+            pair[1] = '1' + pair[1]
+
+        # Combine the two branches back into the heap
+        heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:])
+    
+    # Return the sorted Huffman code (by the length of the code)
+    return sorted(heapq.heappop(heap)[1:], key=lambda p: (len(p[-1]), p))
+
+# Given probabilities
+probabilities = {
+    'x1': 0.4,
+    'x2': 0.19,
+    'x3': 0.16,
+    'x4': 0.15,
+    'x5': 0.10
+}
+
+# Build the Huffman tree
+huffman_tree = build_huffman_tree(probabilities)
+
+# Print the Huffman codes
+print("Symbol\tHuffman Code")
+for symbol, code in huffman_tree:
+    print(f"{symbol}\t{code}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3.EXPERIMENT: Shanon Fano code
+
+
+import math
+
+# Symbol probabilities
+symbol_probs = {
+    'M1': 1/2,
+    'M2': 1/4,
+    'M3': 1/8,
+    'M4': 1/16,
+    'M5': 1/32,
+    'M6': 1/32
+}
+
+# Sort symbols by probabilities in descending order
+sorted_symbols = sorted(symbol_probs.keys(), key=lambda x: symbol_probs[x], reverse=True)
+
+# Shannon-Fano encoding function
+def shannon_fano_encode(symbols):
+    if len(symbols) == 1:
+        return {symbols[0]: ''}
+
+    # Find the splitting point
+    split = len(symbols) // 2
+
+    # Recursively encode the left and right halves
+    left = shannon_fano_encode(symbols[:split])
+    right = shannon_fano_encode(symbols[split:])
+
+    # Append '0' to codes on the left, '1' to codes on the right
+    for s in left:
+        left[s] = '0' + left[s]
+    for s in right:
+        right[s] = '1' + right[s]
+
+    # Merge and return the results
+    return {**left, **right}
+
+# Calculate entropy
+entropy = sum([-symbol_probs[s] * math.log2(symbol_probs[s]) for s in symbol_probs])
+
+# Shannon-Fano coding
+shannon_fano_code = shannon_fano_encode(sorted_symbols)
+
+# Print symbol probabilities
+print("Symbol Probabilities:")
+for symbol, prob in symbol_probs.items():
+    print(f"{symbol}: {prob:.6f}")
+
+# Print Shannon-Fano code
+print("\nShannon-Fano Code:")
+for symbol, code in shannon_fano_code.items():
+    print(f"{symbol}: {code}")
+
+# Print entropy
+print("\nentropy:",entropy)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3.EXPERIMENT NRZ
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Input binary data
+bits = np.array([1, 1, 0, 0, 1, 0, 1])  
+n = 100  # Samples per bit
+
+# Time vector for the entire signal
+T = len(bits)  # Total duration in bits
+t = np.arange(0, T, 1/n)
+
+# NRZ-L encoding (Non-Return-to-Zero Level)
+nrz_l = np.zeros(len(t))
+for i in range(len(bits)):
+    nrz_l[i*n:(i+1)*n] = bits[i]
+
+# NRZ-M encoding (Non-Return-to-Zero Mark)
+nrz_m = np.zeros(len(t))
+current_level = 0  # Start at low level for '0'
+for i in range(len(bits)):
+    if bits[i] == 1:
+        current_level = 1 - current_level  # Toggle the level on '1'
+    nrz_m[i*n:(i+1)*n] = current_level
+
+# NRZ-S encoding (Non-Return-to-Zero Space)
+nrz_s = np.zeros(len(t))
+current_level = 1  # Start at high level for '0'
+for i in range(len(bits)):
+    if bits[i] == 1:
+        current_level = -current_level  # Toggle level on '1'
+    nrz_s[i*n:(i+1)*n] = current_level
+
+# Plotting the signals
+plt.figure(figsize=(12, 8))
+
+# NRZ-L plot
+plt.subplot(3, 1, 1)
+plt.title('NRZ Level (NRZ-L)')
+plt.plot(t, nrz_l, 'b', linewidth=2)
+plt.grid()
+plt.ylim([-0.2, 1.2])
+plt.ylabel('Amplitude')
+
+# NRZ-M plot
+plt.subplot(3, 1, 2)
+plt.title('NRZ Mark (NRZ-M)')
+plt.plot(t, nrz_m, 'g', linewidth=2)
+plt.grid()
+plt.ylim([-0.2, 1.2])
+plt.ylabel('Amplitude')
+
+# NRZ-S plot
+plt.subplot(3, 1, 3)
+plt.title('NRZ Space (NRZ-S)')
+plt.plot(t, nrz_s, 'r', linewidth=2)
+plt.grid()
+plt.ylim([-1.2, 1.2])
+plt.ylabel('Amplitude')
+plt.xlabel('Time (s)')
+
+# Display the plots
+plt.tight_layout()
+plt.show()
